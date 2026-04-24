@@ -18,6 +18,7 @@ do
     Console.WriteLine("3) Display Category and related products");
     Console.WriteLine("4) Display all Categories and their related products");
     Console.WriteLine("5) Add a Product");
+    Console.WriteLine("6) Edit a Product");
     Console.WriteLine("Enter to quit");
     string? choice = Console.ReadLine();
     Console.Clear();
@@ -116,15 +117,12 @@ do
     else if (choice == "5")
     {
         AddProduct(logger);
-        
+
 
     }
     else if (choice == "6")
     {
-        // var db = new DataContext();
-        // Console.WriteLine(GetCategory(db, "test").CategoryName);
-        // Console.WriteLine(GetProduct(db).ProductName);
-        // Console.WriteLine(GetSupplier(db).CompanyName);
+        EditProduct(logger);
     }
     else if (String.IsNullOrEmpty(choice))
     {
@@ -191,67 +189,188 @@ static Supplier? GetSupplier(DataContext db, string prompt)
     }
     return null;
 }
-static void AddProduct(Logger logger)
+void AddProduct(Logger logger)
 {
     var db = new DataContext();
-        var query = db.Products.OrderBy(p => p.ProductId);
-        string functionString = "product";
-        Product productToAdd = new();
+    var query = db.Products.OrderBy(p => p.ProductId);
+    string functionString = "product";
+    Product productToAdd = new();
 
+    while (true)
+    {
+        do
+        {
+            Console.WriteLine("Enter the name of the product:");
+            productToAdd.ProductName = Console.ReadLine();
+        } while (string.IsNullOrEmpty(productToAdd.ProductName));
+        if (!query.Any(q => q.ProductName.ToLower() == productToAdd.ProductName.ToLower())) //bug if product is ever null
+        {
+            break;
+        }
+        logger.Info($"{productToAdd.ProductName} already exists");
+    }
+    productToAdd.Category = GetCategory(db, functionString);
+    if (productToAdd.Category == null)
+    {
+        logger.Error("User failed to select a valid category. Aborting add.");
+        return;
+    }
+    productToAdd.Supplier = GetSupplier(db, functionString);
+    if (productToAdd.Supplier == null)
+    {
+        logger.Error("User failed to select a valid supplier. Aborting add.");
+        return;
+    }
+    try
+    {
+        Console.WriteLine("Enter the Unit Price of the product:");
+        productToAdd.UnitPrice = Math.Round(Convert.ToDecimal(Console.ReadLine().Replace("$", "")), 2);
+    }
+    catch (FormatException)
+    {
+        logger.Error("User entered an invalid format for the unit price.");
+        return;
+    }
+
+    Console.WriteLine("Enter the quantity of the product in stock:");
+    productToAdd.UnitsInStock = short.Parse(Console.ReadLine()!);
+    Console.WriteLine("Enter the quantity of the product on order:");
+    productToAdd.UnitsOnOrder = short.Parse(Console.ReadLine()!);
+    Console.WriteLine("Enter the quantity of the product needed to trigger a reorder:");
+    productToAdd.ReorderLevel = short.Parse(Console.ReadLine()!);
+    Console.WriteLine("Quantity per unit (ex: 24 - 12 oz bottles):");
+    productToAdd.QuantityPerUnit = Console.ReadLine();
+    Console.WriteLine("Is the product discontinued? (y/n)");
+    string discontinued = Console.ReadLine()!;
+    if (discontinued.ToLower() == "y")
+    {
+        productToAdd.Discontinued = true;
+    }
+    else
+    {
+        productToAdd.Discontinued = false;
+    }
+    db.AddProduct(productToAdd);
+}
+void EditProduct(Logger logger)
+{
+    var db = new DataContext();
+    var query = db.Products.OrderBy(p => p.ProductId);
+    string functionString = "edited record";
+    Product productToEdit = GetProduct(db, functionString);
+    Console.WriteLine("Do you want to edit the product name? (y/n)");
+    string editName = Console.ReadLine()!;
+    if (editName.ToLower() == "y")
+    {
         while (true)
         {
-            do
-            {
-                Console.WriteLine("Enter the name of the product:");
-                productToAdd.ProductName = Console.ReadLine();
-            } while (string.IsNullOrEmpty(productToAdd.ProductName));
-            if (!query.Any(q => q.ProductName.ToLower() == productToAdd.ProductName.ToLower())) //bug if product is ever null
-            {
-                break;
-            }
-            logger.Info($"{productToAdd.ProductName} already exists");
-        }
-        productToAdd.Category = GetCategory(db, functionString);
-        if (productToAdd.Category == null)
+        do
         {
-            logger.Error("User failed to select a valid category. Aborting add.");
-            return;
-        }
-        productToAdd.Supplier = GetSupplier(db, functionString);
-        if (productToAdd.Supplier == null)
+            Console.WriteLine("Enter the name of the product:");
+            productToEdit.ProductName = Console.ReadLine();
+        } while (string.IsNullOrEmpty(productToEdit.ProductName));
+        if (!query.Any(q => q.ProductName.ToLower() == productToEdit.ProductName.ToLower())) //bug if product is ever null
         {
-            logger.Error("User failed to select a valid supplier. Aborting add.");
-            return;
+            break;
         }
-        try
-        {
-            Console.WriteLine("Enter the Unit Price of the product:");
-            productToAdd.UnitPrice = Math.Round(Convert.ToDecimal(Console.ReadLine().Replace("$", "")), 2);
+        logger.Info($"{productToEdit.ProductName} already exists");
         }
-        catch (FormatException)
-        {
-            logger.Error("User entered an invalid format for the unit price.");
-            return;
-        }
-        
-        Console.WriteLine("Enter the quantity of the product in stock:");
-        productToAdd.UnitsInStock = short.Parse(Console.ReadLine()!);
-        Console.WriteLine("Enter the quantity of the product on order:");
-        productToAdd.UnitsOnOrder = short.Parse(Console.ReadLine()!);
-        Console.WriteLine("Enter the quantity of the product needed to trigger a reorder:");
-        productToAdd.ReorderLevel = short.Parse(Console.ReadLine()!);
-        Console.WriteLine("Quantity per unit (ex: 24 - 12 oz bottles):");
-        productToAdd.QuantityPerUnit = Console.ReadLine();
-        Console.WriteLine("Is the product discontinued? (y/n)");
-        string discontinued = Console.ReadLine()!;
-        if (discontinued.ToLower() == "y")
-        {
-            productToAdd.Discontinued = true;
-        }
-        else
-        {
-            productToAdd.Discontinued = false;
-        }
-        db.AddProduct(productToAdd);
+    }
+    Console.WriteLine("Do you want to edit the category? (y/n)");
+    string editCategory = Console.ReadLine()!;
+    if (editCategory.ToLower() == "y")
+    {
+    productToEdit.Category = GetCategory(db, functionString);
+    if (productToEdit.Category == null)
+    {
+        logger.Error("User failed to select a valid category. Aborting add.");
+        return;
+    }
+    }
+    Console.WriteLine("Do you want to edit the supplier? (y/n)");
+    string editSupplier = Console.ReadLine()!;
+    if (editSupplier.ToLower() == "y")
+    {
+    productToEdit.Supplier = GetSupplier(db, functionString);
+    if (productToEdit.Supplier == null)
+    {
+        logger.Error("User failed to select a valid supplier. Aborting add.");
+        return;
+    }
+    }
+    Console.WriteLine("Do you want to edit the unit price? (y/n)");
+    string editUnitPrice = Console.ReadLine()!;
+    if (editUnitPrice.ToLower() == "y")
+    {
+    try
+    {
+        Console.WriteLine("Enter the Unit Price of the product:");
+        productToEdit.UnitPrice = Math.Round(Convert.ToDecimal(Console.ReadLine().Replace("$", "")), 2);
+    }
+    catch (FormatException)
+    {
+        logger.Error("User entered an invalid format for the unit price.");
+        return;
+    }
+    }
+    Console.WriteLine("Do you want to edit the quantity in stock? (y/n)");
+    string editStock = Console.ReadLine()!;
+    if (editStock.ToLower() == "y")
+    {
+    Console.WriteLine("Enter the quantity of the product in stock:");
+    productToEdit.UnitsInStock = short.Parse(Console.ReadLine()!);
+    }
+        Console.WriteLine("Do you want to edit the quantity on order? (y/n)");
+    string editOnOrder = Console.ReadLine()!;
+    if (editOnOrder.ToLower() == "y")
+    {
+    Console.WriteLine("Enter the quantity of the product on order:");
+    productToEdit.UnitsOnOrder = short.Parse(Console.ReadLine()!);
+    }
+    Console.WriteLine("Do you want to edit the reorder level? (y/n)");
+    string editReorder = Console.ReadLine()!;
+    if (editReorder.ToLower() == "y")
+    {
+    Console.WriteLine("Enter the quantity of the product needed to trigger a reorder:");
+    productToEdit.ReorderLevel = short.Parse(Console.ReadLine()!);
+    }
+    Console.WriteLine("Do you want to edit the quantity per unit? (y/n)");
+    string editQuantityPerUnit = Console.ReadLine()!;
+    if (editQuantityPerUnit.ToLower() == "y")
+    {
+    Console.WriteLine("Quantity per unit (ex: 24 - 12 oz bottles):");
+    productToEdit.QuantityPerUnit = Console.ReadLine();
+    }
+    Console.WriteLine("Do you want to edit whether the product is discontinued? (y/n)");
+    string editDiscontinued = Console.ReadLine()!;
+    if (editDiscontinued.ToLower() == "y")
+    {
+    Console.WriteLine("Is the product discontinued? (y/n)");
+    string discontinued = Console.ReadLine()!;
+    if (discontinued.ToLower() == "y")
+    {
+        productToEdit.Discontinued = true;
+    }
+    else
+    {
+        productToEdit.Discontinued = false;
+    }
+    }
+
+    // db.SaveChanges();
+    Product updatedProduct = new()
+    {
+        ProductId = productToEdit.ProductId,
+        ProductName = productToEdit.ProductName,
+        CategoryId = productToEdit.Category.CategoryId,
+        SupplierId = productToEdit.Supplier.SupplierId,
+        UnitPrice = productToEdit.UnitPrice,
+        UnitsInStock = productToEdit.UnitsInStock,
+        UnitsOnOrder = productToEdit.UnitsOnOrder,
+        ReorderLevel = productToEdit.ReorderLevel,
+        QuantityPerUnit = productToEdit.QuantityPerUnit,
+        Discontinued = productToEdit.Discontinued
+    };
+    db.EditProduct(updatedProduct);
 }
 logger.Info("Program ended");
