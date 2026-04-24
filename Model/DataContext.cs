@@ -31,6 +31,16 @@ public partial class DataContext : DbContext
 
     public virtual DbSet<Territory> Territories { get; set; }
 
+    public void AddCategory(Category category)
+    {
+        this.Categories.Add(category);
+        this.SaveChanges();
+    }
+    public void AddProduct(Product product)
+    {
+        this.Products.Add(product);
+        this.SaveChanges();
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
