@@ -23,6 +23,8 @@ do
     Console.WriteLine("6) Edit a Product");
     Console.WriteLine("7) Display all Product + discontinued filter");
     Console.WriteLine("8) Display specific product details");
+    Console.WriteLine("9) Edit a Category");
+     Console.WriteLine("10) Delete a Product");
     Console.WriteLine("Enter to quit");
     string? choice = Console.ReadLine();
     Console.Clear();
@@ -60,6 +62,15 @@ do
     {
         ProductFunctionality.FullProductInfo(logger);
     }
+    else if (choice == "9")
+    {
+        CategoryFunctionality.EditCategory(logger);
+    } else if (choice == "10")
+    {
+        ProductFunctionality.DeleteProduct(logger);
+            
+    }
+
     else if (String.IsNullOrEmpty(choice))
     {
         break;

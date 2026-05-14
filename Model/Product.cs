@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace NorthwindConsole.Model;
 
@@ -24,6 +25,9 @@ public partial class Product
     public short? ReorderLevel { get; set; }
 
     public bool Discontinued { get; set; }
+
+   
+    public DateTime? DateDeleted { get; set; }
 
     public virtual Category? Category { get; set; }
 

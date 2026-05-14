@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using NorthwindConsole.Model;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.IdentityModel.Tokens;
 
 public class CategoryFunctionality
 {
@@ -16,7 +17,10 @@ public class CategoryFunctionality
             Console.WriteLine($"{item.CategoryName}");
             foreach (Product p in item.Products)
             {
-                Console.WriteLine($"\t{p.ProductName}");
+                if (p.DateDeleted is null)
+                {
+                    Console.WriteLine($"\t{p.ProductName}");
+                }
             }
         }
     }
@@ -39,7 +43,10 @@ public class CategoryFunctionality
         Console.WriteLine($"{category.CategoryName} - {category.Description}");
         foreach (Product p in category.Products)
         {
-            Console.WriteLine($"\t{p.ProductName}");
+            if (p.DateDeleted is null)
+            {
+                Console.WriteLine($"\t{p.ProductName}");
+            }
         }
     }
     public static void AddCategory(Logger logger)
@@ -100,8 +107,55 @@ public class CategoryFunctionality
 
     public static void EditCategory(Logger logger)
     {
-        
+
+        var db = new DataContext();
+        var query = db.Categories.OrderBy(p => p.CategoryId);
+        string functionString = "edit";
+        Category category = GetTable.GetCategory(db, functionString)!;
+        //color change to red for the user input
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Choosen Category: ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine($"{category.CategoryId}. {category.CategoryName}\n{category.Description}");
+        Console.WriteLine("Do you want to change the Category Name (y) or (n):");
+        if (Console.ReadLine() == "y")
+        {
+            string input;
+            Console.WriteLine($"Current Name: {category.CategoryName}");
+            while (true)
+            {
+
+                Console.WriteLine("Enter new category name: ");
+                category.CategoryName = Console.ReadLine();
+                if (!query.Any(q => q.CategoryName == category.CategoryName))
+                {
+                    break;
+                }
+                logger.Error("Error: Category Name Already Exists");
+            }
+
+        }
+        Console.WriteLine("Do you want to change the Category Description (y) or (n):");
+        if (Console.ReadLine() == "y")
+        {
+            Console.WriteLine($"Current Description: {category.Description}");
+            while (true)
+            {
+                Console.WriteLine("Enter new category name: ");
+                category.CategoryName = Console.ReadLine();
+                if (!category.CategoryName.IsNullOrEmpty())
+                {
+                    break;
+                }
+                Console.WriteLine("Must Enter Value");
+            }
+        }
+        db.EditCategory(category);
     }
+
+
+
 
 }
 

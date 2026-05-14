@@ -193,17 +193,20 @@ public class ProductFunctionality
             {
                 foreach (var product in query)
                 {
-                    if (product.Discontinued == true)
+                    if (product.DateDeleted is null)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"{product.ProductId} - {product.ProductName} // DISCONTINUED");
-                        Console.ForegroundColor = ConsoleColor.White;
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"{product.ProductId} - {product.ProductName}");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        if (product.Discontinued == true)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"{product.ProductId} - {product.ProductName} // DISCONTINUED");
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"{product.ProductId} - {product.ProductName}");
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
                     }
                 }
             }
@@ -251,7 +254,7 @@ public class ProductFunctionality
         Console.WriteLine("Product Information:");
         Console.WriteLine("-------------------");
         Console.WriteLine($"ID: {productToDisplay.ProductId}");
-        Console.ForegroundColor = ConsoleColor.DarkCyan;   
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
         Console.WriteLine($"Name: {productToDisplay.ProductName}");
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine($"Category: {productToDisplay.Category.CategoryName}");
@@ -294,4 +297,23 @@ public class ProductFunctionality
         Console.WriteLine("Press enter to continue");
         Console.ReadLine();
     }
+    public static void DeleteProduct(Logger logger)
+    {
+        var db = new DataContext();
+        var query = db.Products.OrderBy(p => p.ProductId);
+        string functionString = "deletion";
+        Product productToDelete = GetTable.GetProduct(db, functionString);
+        Console.WriteLine("Are you sure you want to deletw this product? (y/n)");
+        if (Console.ReadLine() == "y")
+        {
+            db.DeleteProduct(productToDelete);
+        }
+        else
+        {
+            return;
+        }
+
+    }
 }
+
+
